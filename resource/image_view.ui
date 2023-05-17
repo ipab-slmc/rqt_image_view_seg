@@ -252,7 +252,7 @@
         </property>
         <layout class="QHBoxLayout" name="horizontalLayout_4">
           <item>
-           <widget class="rqt_image_view::RatioLayoutedFrame" name="image_frame">
+           <widget class="rqt_image_view_seg::RatioLayoutedFrame" name="image_frame">
             <property name="sizePolicy">
              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
               <horstretch>0</horstretch>
@@ -289,9 +289,9 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>rqt_image_view::RatioLayoutedFrame</class>
+   <class>rqt_image_view_seg::RatioLayoutedFrame</class>
    <extends>QFrame</extends>
-   <header>rqt_image_view/ratio_layouted_frame.h</header>
+   <header>rqt_image_view_seg/ratio_layouted_frame.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

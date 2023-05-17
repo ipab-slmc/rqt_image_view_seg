@@ -30,8 +30,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef rqt_image_view__ImageView_H
-#define rqt_image_view__ImageView_H
+#ifndef rqt_image_view_seg__ImageView_H
+#define rqt_image_view_seg__ImageView_H
 
 #include <rqt_gui_cpp/plugin.h>
 
@@ -41,7 +41,18 @@
 #include <ros/package.h>
 #include <ros/macros.h>
 #include <sensor_msgs/Image.h>
-#include <geometry_msgs/Point.h>
+#include <std_msgs/Header.h>
+#include <geometry_msgs/PointStamped.h>
+
+#include <pluginlib/class_list_macros.h>
+#include <ros/master.h>
+#include <sensor_msgs/image_encodings.h>
+
+#include <cv_bridge/cv_bridge.h>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <ros_sam/Segmentation.h>
+
+#include <atomic>  
 
 #include <opencv2/core/core.hpp>
 
@@ -55,7 +66,7 @@
 
 #include <vector>
 
-namespace rqt_image_view {
+namespace rqt_image_view_seg {
 
 class ImageView
   : public rqt_gui_cpp::Plugin
@@ -89,6 +100,8 @@ protected:
   virtual QSet<QString> getTopics(const QSet<QString>& message_types, const QSet<QString>& message_sub_types, const QList<QString>& transports);
 
   virtual void selectTopic(const QString& topic);
+
+  sensor_msgs::ImagePtr createMaskedImage(sensor_msgs::Image image, sensor_msgs::Image mask);
 
 protected slots:
 
@@ -131,6 +144,9 @@ protected:
 
   cv::Mat conversion_mat_;
 
+  std::atomic_int64_t image_time_;
+  sensor_msgs::Image last_img_msg_;
+
 private:
 
   enum RotateState {
@@ -146,6 +162,8 @@ private:
 
   QString arg_topic_name;
   ros::Publisher pub_mouse_left_;
+  ros::ServiceClient segmentation_client_;
+  ros::Publisher segmented_image_pub_;
 
   bool pub_topic_custom_;
 
@@ -158,4 +176,4 @@ private:
 
 }
 
-#endif // rqt_image_view__ImageView_H
+#endif // rqt_image_view_seg__ImageView_H

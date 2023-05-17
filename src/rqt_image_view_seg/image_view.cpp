@@ -30,20 +30,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <rqt_image_view/image_view.h>
+#include <rqt_image_view_seg/image_view.h>
 
-#include <pluginlib/class_list_macros.h>
-#include <ros/master.h>
-#include <sensor_msgs/image_encodings.h>
-
-#include <cv_bridge/cv_bridge.h>
-#include <opencv2/imgproc/imgproc.hpp>
 
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QPainter>
 
-namespace rqt_image_view {
+namespace rqt_image_view_seg {
 
 ImageView::ImageView()
   : rqt_gui_cpp::Plugin()
@@ -121,6 +115,7 @@ void ImageView::shutdownPlugin()
 {
   subscriber_.shutdown();
   pub_mouse_left_.shutdown();
+  segmented_image_pub_.shutdown();
 }
 
 void ImageView::saveSettings(qt_gui_cpp::Settings& plugin_settings, qt_gui_cpp::Settings& instance_settings) const
@@ -166,7 +161,7 @@ void ImageView::restoreSettings(const qt_gui_cpp::Settings& plugin_settings, con
     selectTopic(topic);
   }
 
-  bool publish_click_location = instance_settings.value("publish_click_location", false).toBool();
+  bool publish_click_location = instance_settings.value("publish_click_location", true).toBool();
   ui_.publish_click_location_check_box->setChecked(publish_click_location);
 
   QString pub_topic = instance_settings.value("mouse_pub_topic", "").toString();
@@ -410,9 +405,12 @@ void ImageView::onMousePublish(bool checked)
 
   if(checked)
   {
-    pub_mouse_left_ = getNodeHandle().advertise<geometry_msgs::Point>(topicName, 1000);
+    pub_mouse_left_ = getNodeHandle().advertise<geometry_msgs::PointStamped>(topicName, 1000);
+    segmented_image_pub_ = getNodeHandle().advertise<sensor_msgs::Image>("/ros_sam/masked_image", 1000);
+    segmentation_client_ = getNodeHandle().serviceClient<ros_sam::Segmentation>("/ros_sam/segment");
   } else {
     pub_mouse_left_.shutdown();
+    segmented_image_pub_.shutdown();
   }
 }
 
@@ -420,34 +418,94 @@ void ImageView::onMouseLeft(int x, int y)
 {
   if(ui_.publish_click_location_check_box->isChecked() && !ui_.image_frame->getImage().isNull())
   {
-    geometry_msgs::Point clickCanvasLocation;
+    geometry_msgs::PointStamped clickCanvasLocation;
     // Publish click location in pixel coordinates
-    clickCanvasLocation.x = round((double)x/(double)ui_.image_frame->width()*(double)ui_.image_frame->getImage().width());
-    clickCanvasLocation.y = round((double)y/(double)ui_.image_frame->height()*(double)ui_.image_frame->getImage().height());
-    clickCanvasLocation.z = 0;
+    ros::Time click_time;
+    clickCanvasLocation.header.stamp = click_time.fromNSec(image_time_);
+    clickCanvasLocation.point.x = round((double)x/(double)ui_.image_frame->width()*(double)ui_.image_frame->getImage().width());
+    clickCanvasLocation.point.y = round((double)y/(double)ui_.image_frame->height()*(double)ui_.image_frame->getImage().height());
+    clickCanvasLocation.point.z = 0;
 
-    geometry_msgs::Point clickLocation = clickCanvasLocation;
+    geometry_msgs::PointStamped clickLocation = clickCanvasLocation;
 
     switch(rotate_state_)
     {
       case ROTATE_90:
-        clickLocation.x = clickCanvasLocation.y;
-        clickLocation.y = ui_.image_frame->getImage().width() - clickCanvasLocation.x;
+        clickLocation.point.x = clickCanvasLocation.point.y;
+        clickLocation.point.y = ui_.image_frame->getImage().width() - clickCanvasLocation.point.x;
         break;
       case ROTATE_180:
-        clickLocation.x = ui_.image_frame->getImage().width() - clickCanvasLocation.x;
-        clickLocation.y = ui_.image_frame->getImage().height() - clickCanvasLocation.y;
+        clickLocation.point.x = ui_.image_frame->getImage().width() - clickCanvasLocation.point.x;
+        clickLocation.point.y = ui_.image_frame->getImage().height() - clickCanvasLocation.point.y;
         break;
       case ROTATE_270:
-        clickLocation.x = ui_.image_frame->getImage().height() - clickCanvasLocation.y;
-        clickLocation.y = clickCanvasLocation.x;
+        clickLocation.point.x = ui_.image_frame->getImage().height() - clickCanvasLocation.point.y;
+        clickLocation.point.y = clickCanvasLocation.point.x;
         break;
       default:
         break;
     }
 
     pub_mouse_left_.publish(clickLocation);
+
+    ros_sam::Segmentation srv;
+    srv.request.image = last_img_msg_;
+    srv.request.query_points = {clickLocation.point};
+    srv.request.query_labels = {1};
+    srv.request.multimask = false;
+    srv.request.logits = false;
+
+    if(segmentation_client_.waitForExistence(ros::Duration(1))){
+      ROS_INFO("Found service");
+    } else {
+      ROS_ERROR("Can't Find Service");
+      return;
+    }
+
+    if (segmentation_client_.call(srv))
+    {
+      ROS_INFO("Got Service response with score %f", srv.response.scores[0]);
+      sensor_msgs::ImagePtr masked_image = createMaskedImage(last_img_msg_, srv.response.masks[0]);
+      segmented_image_pub_.publish(*masked_image);
+    }
+    else
+    {
+      ROS_ERROR("Failed to call service");
+    }
+
   }
+}
+
+sensor_msgs::ImagePtr ImageView::createMaskedImage(sensor_msgs::Image image_msg, sensor_msgs::Image mask_msg){
+
+    ROS_INFO_STREAM("mask_msg " << mask_msg.encoding);
+
+    cv_bridge::CvImagePtr image_ptr, mask_ptr, masked_image_ptr;
+    try
+    {
+      image_ptr = cv_bridge::toCvCopy(image_msg, sensor_msgs::image_encodings::RGB8);
+      mask_ptr = cv_bridge::toCvCopy(mask_msg, sensor_msgs::image_encodings::TYPE_8UC1);
+    }
+    catch (cv_bridge::Exception& e)
+    {
+      ROS_ERROR("cv_bridge exception: %s", e.what());
+      return masked_image_ptr->toImageMsg();
+    }
+    
+    masked_image_ptr = image_ptr;
+
+    cv::Mat out_image;
+    std::vector<cv::Mat> rgbChannels;
+    cv::Mat rg = cv::Mat::zeros(cv::Size(masked_image_ptr->image.cols, masked_image_ptr->image.rows), CV_8UC1);
+    cv::Mat b = 255*mask_ptr->image;
+    rgbChannels.push_back(rg);
+    rgbChannels.push_back(rg);
+    rgbChannels.push_back(b);
+    cv::merge(rgbChannels, out_image);
+
+    masked_image_ptr->image += out_image;
+    return masked_image_ptr->toImageMsg();
+
 }
 
 void ImageView::onPubTopicChanged()
@@ -569,6 +627,9 @@ void ImageView::callbackImage(const sensor_msgs::Image::ConstPtr& msg)
     cv_bridge::CvImageConstPtr cv_ptr = cv_bridge::toCvShare(msg, sensor_msgs::image_encodings::RGB8);
     conversion_mat_ = cv_ptr->image;
 
+    image_time_ = msg->header.stamp.toNSec();
+    last_img_msg_ = *msg;
+
     if (num_gridlines_ > 0)
       overlayGrid();
   }
@@ -668,4 +729,4 @@ void ImageView::callbackImage(const sensor_msgs::Image::ConstPtr& msg)
 }
 }
 
-PLUGINLIB_EXPORT_CLASS(rqt_image_view::ImageView, rqt_gui_cpp::Plugin)
+PLUGINLIB_EXPORT_CLASS(rqt_image_view_seg::ImageView, rqt_gui_cpp::Plugin)

@@ -1,10 +1,10 @@
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Changelog for package rqt_image_view
+Changelog for package rqt_image_view_seg
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 0.4.16 (2020-08-07)
 -------------------
-* fix segfault on topic change (`#40 <https://github.com/ros-visualization/rqt_image_view/issues/40>`_)
+* fix segfault on topic change (`#40 <https://github.com/ros-visualization/rqt_image_view_seg/issues/40>`_)
 
 0.4.15 (2020-04-07)
 -------------------
@@ -12,31 +12,31 @@ Changelog for package rqt_image_view
 
 0.4.14 (2020-01-10)
 -------------------
-* fix missing include for QSet (`#31 <https://github.com/ros-visualization/rqt_image_view/issues/31>`_)
-* add color scheme for depth images (`#23 <https://github.com/ros-visualization/rqt_image_view/issues/23>`_)
+* fix missing include for QSet (`#31 <https://github.com/ros-visualization/rqt_image_view_seg/issues/31>`_)
+* add color scheme for depth images (`#23 <https://github.com/ros-visualization/rqt_image_view_seg/issues/23>`_)
 
 0.4.13 (2018-05-02)
 -------------------
-* add build dependency on Qt5 dev package (`#15 <https://github.com/ros-visualization/rqt_image_view/issues/15>`_)
+* add build dependency on Qt5 dev package (`#15 <https://github.com/ros-visualization/rqt_image_view_seg/issues/15>`_)
 
 0.4.12 (2018-05-02)
 -------------------
-* save and restore the smooth image check box state (`#13 <https://github.com/ros-visualization/rqt_image_view/issues/13>`_)
-* allow image rotation in 90° steps (`#10 <https://github.com/ros-visualization/rqt_image_view/issues/10>`_)
-* use Python distutils to install the global rqt_image_view executable (`#12 <https://github.com/ros-visualization/rqt_image_view/issues/12>`_)
+* save and restore the smooth image check box state (`#13 <https://github.com/ros-visualization/rqt_image_view_seg/issues/13>`_)
+* allow image rotation in 90° steps (`#10 <https://github.com/ros-visualization/rqt_image_view_seg/issues/10>`_)
+* use Python distutils to install the global rqt_image_view_seg executable (`#12 <https://github.com/ros-visualization/rqt_image_view_seg/issues/12>`_)
 
 0.4.11 (2017-10-25)
 -------------------
-* use catkin_install_python with scripts (`#8 <https://github.com/ros-visualization/rqt_image_view/issues/8>`_)
+* use catkin_install_python with scripts (`#8 <https://github.com/ros-visualization/rqt_image_view_seg/issues/8>`_)
 
 0.4.10 (2017-10-13)
 -------------------
-* add option to render grid (`#7 <https://github.com/ros-visualization/rqt_image_view/issues/7>`_)
+* add option to render grid (`#7 <https://github.com/ros-visualization/rqt_image_view_seg/issues/7>`_)
 
 0.4.9 (2017-07-27)
 ------------------
-* reduce the size of the image border on the left and right side (`#5 <https://github.com/ros-visualization/rqt_image_view/issues/5>`_)
-* avoid shrinking the image when the aspect ratio changes (`#4 <https://github.com/ros-visualization/rqt_image_view/issues/4>`_)
+* reduce the size of the image border on the left and right side (`#5 <https://github.com/ros-visualization/rqt_image_view_seg/issues/5>`_)
+* avoid shrinking the image when the aspect ratio changes (`#4 <https://github.com/ros-visualization/rqt_image_view_seg/issues/4>`_)
 
 0.4.8 (2017-04-24)
 ------------------
@@ -73,7 +73,7 @@ Changelog for package rqt_image_view
 0.3.13 (2016-03-08)
 -------------------
 * use proper icon for images
-* add optional topic argument to rqt_image_view
+* add optional topic argument to rqt_image_view_seg
 * fix width of save-as-image button
 * Contributors: Dirk Thomas, Vincent Rabaud
 
@@ -120,8 +120,8 @@ Changelog for package rqt_image_view
 
 0.3.1 (2013-10-09)
 ------------------
-* fix event handling for rqt_image_view enabling to run multiple instances simultaneously (`#66 <https://github.com/ros-visualization/rqt_common_plugins/issues/66>`_)
-* add rqt_image_view to global bin (`#168 <https://github.com/ros-visualization/rqt_common_plugins/issues/168>`_)
+* fix event handling for rqt_image_view_seg enabling to run multiple instances simultaneously (`#66 <https://github.com/ros-visualization/rqt_common_plugins/issues/66>`_)
+* add rqt_image_view_seg to global bin (`#168 <https://github.com/ros-visualization/rqt_common_plugins/issues/168>`_)
 
 0.3.0 (2013-08-28)
 ------------------

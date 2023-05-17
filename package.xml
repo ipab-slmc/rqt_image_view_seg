@@ -3,17 +3,17 @@
   href="http://download.ros.org/schema/package_format3.xsd"
   schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>rqt_image_view</name>
+  <name>rqt_image_view_seg</name>
   <version>0.4.17</version>
-  <description>rqt_image_view provides a GUI plugin for displaying images using image_transport.</description>
+  <description>rqt_image_view_seg provides a GUI plugin for displaying images using image_transport.</description>
 
   <maintainer email="william@openrobotics.org">William Woodall</maintainer>
 
   <license>BSD</license>
 
-  <url type="website">http://wiki.ros.org/rqt_image_view</url>
-  <url type="repository">https://github.com/ros-visualization/rqt_image_view</url>
-  <url type="bugtracker">https://github.com/ros-visualization/rqt_image_view/issues</url>
+  <url type="website">http://wiki.ros.org/rqt_image_view_seg</url>
+  <url type="repository">https://github.com/ros-visualization/rqt_image_view_seg</url>
+  <url type="bugtracker">https://github.com/ros-visualization/rqt_image_view_seg/issues</url>
 
   <author email="dthomas@osrfoundation.org">Dirk Thomas</author>
   <author email="mabel@openrobotics.org">Mabel Zhang</author>
@@ -29,6 +29,7 @@
   <build_depend>rqt_gui</build_depend>
   <build_depend>rqt_gui_cpp</build_depend>
   <build_depend>sensor_msgs</build_depend>
+  <build_depend>ros_sam</build_depend>
   
   <exec_depend>cv_bridge</exec_depend>
   <exec_depend>geometry_msgs</exec_depend>
@@ -36,6 +37,7 @@
   <exec_depend>rqt_gui</exec_depend>
   <exec_depend>rqt_gui_cpp</exec_depend>
   <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>ros_sam</exec_depend>
 
   <export>
     <rqt_gui plugin="${prefix}/plugin.xml"/>
