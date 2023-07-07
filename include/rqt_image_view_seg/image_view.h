@@ -164,6 +164,7 @@ private:
   ros::Publisher pub_mouse_left_;
   ros::ServiceClient segmentation_client_;
   ros::Publisher segmented_image_pub_;
+  ros::Publisher image_mask_pub_;
 
   bool pub_topic_custom_;
 

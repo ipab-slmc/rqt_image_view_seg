@@ -407,10 +407,12 @@ void ImageView::onMousePublish(bool checked)
   {
     pub_mouse_left_ = getNodeHandle().advertise<geometry_msgs::PointStamped>(topicName, 1000);
     segmented_image_pub_ = getNodeHandle().advertise<sensor_msgs::Image>("/sam_node/masked_image", 1000);
+    image_mask_pub_ = getNodeHandle().advertise<sensor_msgs::Image>("/sam_node/mask", 1000);
     segmentation_client_ = getNodeHandle().serviceClient<ros_sam::Segmentation>("/sam_node/segment");
   } else {
     pub_mouse_left_.shutdown();
     segmented_image_pub_.shutdown();
+    image_mask_pub_.shutdown();
   }
 }
 
@@ -465,6 +467,7 @@ void ImageView::onMouseLeft(int x, int y)
     if (segmentation_client_.call(srv))
     {
       ROS_INFO("Got Service response with score %f", srv.response.scores[0]);
+      image_mask_pub_.publish(srv.response.masks[0]);
       sensor_msgs::ImagePtr masked_image = createMaskedImage(last_img_msg_, srv.response.masks[0]);
       segmented_image_pub_.publish(*masked_image);
     }
