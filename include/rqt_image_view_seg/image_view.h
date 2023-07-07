@@ -101,7 +101,8 @@ protected:
 
   virtual void selectTopic(const QString& topic);
 
-  sensor_msgs::ImagePtr createMaskedImage(sensor_msgs::Image image, sensor_msgs::Image mask);
+  sensor_msgs::ImagePtr createMaskedImageMsg(sensor_msgs::Image image, sensor_msgs::ImagePtr mask);
+  sensor_msgs::ImagePtr createMaskMsg(sensor_msgs::Image mask);
 
 protected slots:
 
@@ -164,7 +165,7 @@ private:
   ros::Publisher pub_mouse_left_;
   ros::ServiceClient segmentation_client_;
   ros::Publisher segmented_image_pub_;
-  ros::Publisher image_mask_pub_;
+  ros::Publisher mask_pub_;
 
   bool pub_topic_custom_;
 

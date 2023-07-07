@@ -406,13 +406,13 @@ void ImageView::onMousePublish(bool checked)
   if(checked)
   {
     pub_mouse_left_ = getNodeHandle().advertise<geometry_msgs::PointStamped>(topicName, 1000);
-    segmented_image_pub_ = getNodeHandle().advertise<sensor_msgs::Image>("/sam_node/masked_image", 1000);
-    image_mask_pub_ = getNodeHandle().advertise<sensor_msgs::Image>("/sam_node/mask", 1000);
+    segmented_image_pub_ = getNodeHandle().advertise<sensor_msgs::Image>("/rqt_image_segmentation/masked_image", 1000);
+    mask_pub_ = getNodeHandle().advertise<sensor_msgs::Image>("/rqt_image_segmentation/mask", 1000);
     segmentation_client_ = getNodeHandle().serviceClient<ros_sam::Segmentation>("/sam_node/segment");
   } else {
     pub_mouse_left_.shutdown();
     segmented_image_pub_.shutdown();
-    image_mask_pub_.shutdown();
+    mask_pub_.shutdown();
   }
 }
 
@@ -467,9 +467,10 @@ void ImageView::onMouseLeft(int x, int y)
     if (segmentation_client_.call(srv))
     {
       ROS_INFO("Got Service response with score %f", srv.response.scores[0]);
-      image_mask_pub_.publish(srv.response.masks[0]);
-      sensor_msgs::ImagePtr masked_image = createMaskedImage(last_img_msg_, srv.response.masks[0]);
-      segmented_image_pub_.publish(*masked_image);
+      sensor_msgs::ImagePtr mask_msg = createMaskMsg(srv.response.masks[0]);
+      sensor_msgs::ImagePtr masked_image_msg = createMaskedImageMsg(last_img_msg_, mask_msg);
+      mask_pub_.publish(mask_msg);
+      segmented_image_pub_.publish(*masked_image_msg);
     }
     else
     {
@@ -479,15 +480,43 @@ void ImageView::onMouseLeft(int x, int y)
   }
 }
 
-sensor_msgs::ImagePtr ImageView::createMaskedImage(sensor_msgs::Image image_msg, sensor_msgs::Image mask_msg){
+sensor_msgs::ImagePtr ImageView::createMaskMsg(sensor_msgs::Image mask_msg){
 
-    ROS_INFO_STREAM("mask_msg " << mask_msg.encoding);
+    cv_bridge::CvImagePtr mask_ptr, masked_image_ptr;
+    try
+    {
+      mask_ptr = cv_bridge::toCvCopy(mask_msg, sensor_msgs::image_encodings::TYPE_8UC1);
+    }
+    catch (cv_bridge::Exception& e)
+    {
+      ROS_ERROR("cv_bridge exception: %s", e.what());
+      return masked_image_ptr->toImageMsg();
+    }
+
+    mask_ptr->image *= 255;
+
+    // masked_image_ptr = image_ptr;
+
+    // cv::Mat out_image;
+    // std::vector<cv::Mat> rgbChannels;
+    // cv::Mat rg = cv::Mat::zeros(cv::Size(masked_image_ptr->image.cols, masked_image_ptr->image.rows), CV_8UC1);
+    // cv::Mat b = 255*mask_ptr->image;
+    // rgbChannels.push_back(rg);
+    // rgbChannels.push_back(rg);
+    // rgbChannels.push_back(b);
+    // cv::merge(rgbChannels, out_image);
+
+    // masked_image_ptr->image += out_image;
+    return mask_ptr->toImageMsg();
+}
+
+sensor_msgs::ImagePtr ImageView::createMaskedImageMsg(sensor_msgs::Image image_msg, sensor_msgs::ImagePtr mask_msg){
 
     cv_bridge::CvImagePtr image_ptr, mask_ptr, masked_image_ptr;
     try
     {
       image_ptr = cv_bridge::toCvCopy(image_msg, sensor_msgs::image_encodings::RGB8);
-      mask_ptr = cv_bridge::toCvCopy(mask_msg, sensor_msgs::image_encodings::TYPE_8UC1);
+      mask_ptr = cv_bridge::toCvCopy(*mask_msg, sensor_msgs::image_encodings::TYPE_8UC1);
     }
     catch (cv_bridge::Exception& e)
     {
@@ -500,7 +529,7 @@ sensor_msgs::ImagePtr ImageView::createMaskedImage(sensor_msgs::Image image_msg,
     cv::Mat out_image;
     std::vector<cv::Mat> rgbChannels;
     cv::Mat rg = cv::Mat::zeros(cv::Size(masked_image_ptr->image.cols, masked_image_ptr->image.rows), CV_8UC1);
-    cv::Mat b = 255*mask_ptr->image;
+    cv::Mat b = mask_ptr->image;
     rgbChannels.push_back(rg);
     rgbChannels.push_back(rg);
     rgbChannels.push_back(b);
@@ -508,7 +537,6 @@ sensor_msgs::ImagePtr ImageView::createMaskedImage(sensor_msgs::Image image_msg,
 
     masked_image_ptr->image += out_image;
     return masked_image_ptr->toImageMsg();
-
 }
 
 void ImageView::onPubTopicChanged()
