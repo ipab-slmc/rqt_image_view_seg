@@ -405,7 +405,7 @@ void ImageView::onMousePublish(bool checked)
 
   if(checked)
   {
-    pub_mouse_left_ = getNodeHandle().advertise<geometry_msgs::PointStamped>(topicName, 1000);
+    pub_mouse_left_ = getNodeHandle().advertise<geometry_msgs::PointStamped>("/rqt_image_segmentation/click_point", 1000);
     segmented_image_pub_ = getNodeHandle().advertise<sensor_msgs::Image>("/rqt_image_segmentation/masked_image", 1000);
     mask_pub_ = getNodeHandle().advertise<sensor_msgs::Image>("/rqt_image_segmentation/mask", 1000);
     segmentation_client_ = getNodeHandle().serviceClient<ros_sam::Segmentation>("/sam_node/segment");
