@@ -101,7 +101,7 @@ protected:
 
   virtual void selectTopic(const QString& topic);
 
-  sensor_msgs::ImagePtr createMaskedImageMsg(sensor_msgs::Image image, sensor_msgs::ImagePtr mask);
+  sensor_msgs::ImagePtr createMaskedImageMsg(sensor_msgs::Image image, sensor_msgs::ImagePtr mask, int color);
   sensor_msgs::ImagePtr createMaskMsg(sensor_msgs::Image mask);
 
 protected slots:

@@ -454,7 +454,7 @@ void ImageView::onMouseLeft(int x, int y)
     srv.request.image = last_img_msg_;
     srv.request.query_points = {clickLocation.point};
     srv.request.query_labels = {1};
-    srv.request.multimask = false;
+    srv.request.multimask = true;
     srv.request.logits = false;
 
     if(segmentation_client_.waitForExistence(ros::Duration(1))){
@@ -466,11 +466,24 @@ void ImageView::onMouseLeft(int x, int y)
 
     if (segmentation_client_.call(srv))
     {
-      ROS_INFO("Got Service response with score %f", srv.response.scores[0]);
-      sensor_msgs::ImagePtr mask_msg = createMaskMsg(srv.response.masks[0]);
-      sensor_msgs::ImagePtr masked_image_msg = createMaskedImageMsg(last_img_msg_, mask_msg);
+
+      ROS_INFO("Got Service response with score %f", srv.response.scores[1]);
+      sensor_msgs::ImagePtr mask_msg = createMaskMsg(srv.response.masks[1]);
+      sensor_msgs::ImagePtr masked_image_msg = createMaskedImageMsg(last_img_msg_, mask_msg, 2);
       mask_pub_.publish(mask_msg);
       segmented_image_pub_.publish(*masked_image_msg);
+
+
+      // for (int i = 0; i <  srv.response.scores.size(); i++){
+      //   ROS_INFO("Got Service response with score %f", srv.response.scores[i]);
+      //   sensor_msgs::ImagePtr mask_msg = createMaskMsg(srv.response.masks[i]);
+      //   sensor_msgs::ImagePtr masked_image_msg = createMaskedImageMsg(last_img_msg_, mask_msg, i);
+      //   mask_pub_.publish(mask_msg);
+      //   segmented_image_pub_.publish(*masked_image_msg);
+
+      //    ros::Duration(0.5).sleep();
+      // }
+
     }
     else
     {
@@ -510,7 +523,7 @@ sensor_msgs::ImagePtr ImageView::createMaskMsg(sensor_msgs::Image mask_msg){
     return mask_ptr->toImageMsg();
 }
 
-sensor_msgs::ImagePtr ImageView::createMaskedImageMsg(sensor_msgs::Image image_msg, sensor_msgs::ImagePtr mask_msg){
+sensor_msgs::ImagePtr ImageView::createMaskedImageMsg(sensor_msgs::Image image_msg, sensor_msgs::ImagePtr mask_msg, int color){
 
     cv_bridge::CvImagePtr image_ptr, mask_ptr, masked_image_ptr;
     try
@@ -528,11 +541,17 @@ sensor_msgs::ImagePtr ImageView::createMaskedImageMsg(sensor_msgs::Image image_m
 
     cv::Mat out_image;
     std::vector<cv::Mat> rgbChannels;
-    cv::Mat rg = cv::Mat::zeros(cv::Size(masked_image_ptr->image.cols, masked_image_ptr->image.rows), CV_8UC1);
-    cv::Mat b = mask_ptr->image;
-    rgbChannels.push_back(rg);
-    rgbChannels.push_back(rg);
-    rgbChannels.push_back(b);
+    cv::Mat zeros = cv::Mat::zeros(cv::Size(masked_image_ptr->image.cols, masked_image_ptr->image.rows), CV_8UC1);
+    cv::Mat mask = mask_ptr->image;
+    for (int i = 0; i < 3; i ++){
+
+      if(i == color){
+        rgbChannels.push_back(mask);
+      } else {
+        rgbChannels.push_back(zeros);
+      }
+      }
+
     cv::merge(rgbChannels, out_image);
 
     masked_image_ptr->image += out_image;
