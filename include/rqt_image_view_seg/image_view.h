@@ -36,6 +36,7 @@
 #include <rqt_gui_cpp/plugin.h>
 
 #include <ui_image_view.h>
+#include <std_srvs/Empty.h>
 
 #include <image_transport/image_transport.h>
 #include <ros/package.h>
@@ -131,6 +132,8 @@ protected:
 
   virtual void callbackImage(const sensor_msgs::Image::ConstPtr& msg);
 
+  bool resetClicks(std_srvs::Empty::Request& request, std_srvs::Empty::Response& response);
+
   virtual void invertPixels(int x, int y);
 
   QList<int> getGridIndices(int size) const;
@@ -147,6 +150,7 @@ protected:
 
   std::atomic_int64_t image_time_;
   sensor_msgs::Image last_img_msg_;
+  ros::ServiceServer reset_clicks_server_;
 
 private:
 
@@ -172,6 +176,10 @@ private:
   QAction* hide_toolbar_action_;
 
   int num_gridlines_;
+
+  int num_clicks_;
+
+  std::vector<geometry_msgs::Point> clicked_points_;
 
   RotateState rotate_state_;
 };
