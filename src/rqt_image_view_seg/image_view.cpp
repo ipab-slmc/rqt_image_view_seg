@@ -40,9 +40,9 @@ namespace rqt_image_view_seg
 {
 
   ImageView::ImageView()
-      : rqt_gui_cpp::Plugin(), widget_(0), num_gridlines_(0), rotate_state_(ROTATE_0), num_clicks_(0)
+      : rqt_gui_cpp::Plugin(), widget_(0), num_gridlines_(0), rotate_state_(ROTATE_0), num_clicks_(0), num_clicks_required_(0)
   {
-    setObjectName("ImageView");
+    setObjectName("ImageSegmentationInterface");
   }
 
   void ImageView::initPlugin(qt_gui_cpp::PluginContext &context)
@@ -138,6 +138,7 @@ namespace rqt_image_view_seg
   {
     num_clicks_ = 0;
     clicked_points_.clear();
+    query_labels_.clear();
     return true;
   }
 
@@ -465,9 +466,10 @@ namespace rqt_image_view_seg
       }
 
       clicked_points_.push_back(clickLocation);
+      query_labels_.push_back(1);
       ROS_INFO_STREAM("Got " << num_clicks_ << " clicks " << clickLocation.x << " " << clickLocation.y);
 
-      if (num_clicks_ > 4)
+      if (num_clicks_ > num_clicks_required_)
       {
         ROS_INFO_STREAM("Requesting Segmentation on " << clicked_points_.size() << " points ");
 
@@ -476,9 +478,8 @@ namespace rqt_image_view_seg
         ros_sam::Segmentation srv;
         srv.request.image = last_img_msg_;
         srv.request.query_points = clicked_points_;
-        std::vector<int> query_labels = {0, 0, 0, 1, 1};
 
-        srv.request.query_labels = query_labels;
+        srv.request.query_labels = query_labels_;
         srv.request.multimask = true;
         srv.request.logits = false;
 
@@ -503,24 +504,11 @@ namespace rqt_image_view_seg
               max_idx = i;
             }
           }
-          // ROS_INFO_STREAM("Got Service response with scores " << srv.response.scores[0]);
-          // ROS_INFO_STREAM("Got Service response with scores " << srv.response.scores[1]);
-          // ROS_INFO_STREAM("Got Service response with scores " << srv.response.scores[2]);
           ROS_INFO_STREAM("Highest index: " << max_idx);
           sensor_msgs::ImagePtr mask_msg = createMaskMsg(srv.response.masks[0]);
-          sensor_msgs::ImagePtr masked_image_msg = createMaskedImageMsg(last_img_msg_, mask_msg, 2);
+          sensor_msgs::ImagePtr masked_image_msg = createMaskedImageMsg(last_img_msg_, mask_msg, 2u);
           mask_pub_.publish(mask_msg);
           segmented_image_pub_.publish(*masked_image_msg);
-
-          // for (int i = 0; i <  srv.response.scores.size(); i++){
-          //   ROS_INFO("Got Service response with score %f", srv.response.scores[i]);
-          //   sensor_msgs::ImagePtr mask_msg = createMaskMsg(srv.response.masks[i]);
-          //   sensor_msgs::ImagePtr masked_image_msg = createMaskedImageMsg(last_img_msg_, mask_msg, i);
-          //   mask_pub_.publish(mask_msg);
-          //   segmented_image_pub_.publish(*masked_image_msg);
-
-          //    ros::Duration(0.5).sleep();
-          // }
         }
         else
         {
@@ -546,23 +534,15 @@ namespace rqt_image_view_seg
 
     mask_ptr->image *= 255;
 
-    // masked_image_ptr = image_ptr;
-
-    // cv::Mat out_image;
-    // std::vector<cv::Mat> rgbChannels;
-    // cv::Mat rg = cv::Mat::zeros(cv::Size(masked_image_ptr->image.cols, masked_image_ptr->image.rows), CV_8UC1);
-    // cv::Mat b = 255*mask_ptr->image;
-    // rgbChannels.push_back(rg);
-    // rgbChannels.push_back(rg);
-    // rgbChannels.push_back(b);
-    // cv::merge(rgbChannels, out_image);
-
-    // masked_image_ptr->image += out_image;
     return mask_ptr->toImageMsg();
   }
-
-  sensor_msgs::ImagePtr ImageView::createMaskedImageMsg(sensor_msgs::Image image_msg, sensor_msgs::ImagePtr mask_msg, int color)
+ 
+  // Applies a color mask to an image
+  sensor_msgs::ImagePtr ImageView::createMaskedImageMsg(sensor_msgs::Image& image_msg, sensor_msgs::ImagePtr mask_msg, uint8_t color)
   {
+    if (color > 2) {
+      ROS_ERROR("color must be in {0, 1, 2} to indicate a mask of red, green or blue");
+    }
 
     cv_bridge::CvImagePtr image_ptr, mask_ptr, masked_image_ptr;
     try

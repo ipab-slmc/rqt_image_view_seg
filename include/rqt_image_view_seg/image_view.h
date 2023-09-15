@@ -102,7 +102,7 @@ protected:
 
   virtual void selectTopic(const QString& topic);
 
-  sensor_msgs::ImagePtr createMaskedImageMsg(sensor_msgs::Image image, sensor_msgs::ImagePtr mask, int color);
+  sensor_msgs::ImagePtr createMaskedImageMsg(sensor_msgs::Image& image, sensor_msgs::ImagePtr mask, uint8_t color);
   sensor_msgs::ImagePtr createMaskMsg(sensor_msgs::Image mask);
 
 protected slots:
@@ -178,6 +178,10 @@ private:
   int num_gridlines_;
 
   int num_clicks_;
+
+  int num_clicks_required_;
+
+  std::vector<int> query_labels_;
 
   std::vector<geometry_msgs::Point> clicked_points_;
 
