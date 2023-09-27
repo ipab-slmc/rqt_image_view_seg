@@ -471,6 +471,8 @@ namespace rqt_image_view_seg
 
       if (num_clicks_ > num_clicks_required_)
       {
+        num_clicks_ = 0;
+
         ROS_INFO_STREAM("Requesting Segmentation on " << clicked_points_.size() << " points ");
 
         pub_mouse_left_.publish(clickLocation);
@@ -514,6 +516,9 @@ namespace rqt_image_view_seg
         {
           ROS_ERROR("Failed to call service");
         }
+
+        clicked_points_.clear();
+        query_labels_.clear();
       }
     }
   }
