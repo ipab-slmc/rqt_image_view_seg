@@ -40,7 +40,7 @@ namespace rqt_image_view_seg
 {
 
   ImageView::ImageView()
-      : rqt_gui_cpp::Plugin(), widget_(0), num_gridlines_(0), rotate_state_(ROTATE_0), num_clicks_(0), num_clicks_required_(0)
+      : rqt_gui_cpp::Plugin(), widget_(0), num_gridlines_(0), rotate_state_(ROTATE_0), num_clicks_(0), num_clicks_required_(1)
   {
     setObjectName("ImageSegmentationInterface");
   }
@@ -466,7 +466,14 @@ namespace rqt_image_view_seg
       }
 
       clicked_points_.push_back(clickLocation);
-      query_labels_.push_back(1);
+      if(clicked_points_.size() %2 == 0){
+        ROS_INFO("Include point");
+        query_labels_.push_back(1);
+      } else {
+        ROS_INFO("Exclude point");
+        query_labels_.push_back(0);
+      }
+      
       ROS_INFO_STREAM("Got " << num_clicks_ << " clicks " << clickLocation.x << " " << clickLocation.y);
 
       if (num_clicks_ > num_clicks_required_)
