@@ -476,7 +476,7 @@ namespace rqt_image_view_seg
       
       ROS_INFO_STREAM("Got " << num_clicks_ << " clicks " << clickLocation.x << " " << clickLocation.y);
 
-      if (num_clicks_ > num_clicks_required_)
+      if (num_clicks_ >= num_clicks_required_)
       {
         num_clicks_ = 0;
 
