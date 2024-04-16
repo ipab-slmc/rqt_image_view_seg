@@ -466,13 +466,13 @@ namespace rqt_image_view_seg
       }
 
       clicked_points_.push_back(clickLocation);
-      if(clicked_points_.size() %2 == 0){
-        ROS_INFO("Include point");
-        query_labels_.push_back(1);
-      } else {
-        ROS_INFO("Exclude point");
-        query_labels_.push_back(0);
-      }
+      // if(clicked_points_.size() %2 == 0){
+      ROS_INFO("Include point");
+      query_labels_.push_back(1);
+      // } else {
+      //   ROS_INFO("Exclude point");
+      //   query_labels_.push_back(0);
+      // }
       
       ROS_INFO_STREAM("Got " << num_clicks_ << " clicks " << clickLocation.x << " " << clickLocation.y);
 
@@ -505,15 +505,15 @@ namespace rqt_image_view_seg
 
         if (segmentation_client_.call(srv))
         {
-          float max = 0.0;
-          int max_idx = 0;
-          for (int i = 0; i < srv.response.scores.size(); i++){
-            if(srv.response.scores[i] > max){
-              max = srv.response.scores[i];
-              max_idx = i;
-            }
-          }
-          ROS_INFO_STREAM("Highest index: " << max_idx);
+          // float max = 0.0;
+          // int max_idx = 0;
+          // for (int i = 0; i < srv.response.scores.size(); i++){
+          //   if(srv.response.scores[i] > max){
+          //     max = srv.response.scores[i];
+          //     max_idx = i;
+          //   }
+          // }
+          // ROS_INFO_STREAM("Highest index: " << max_idx);
           sensor_msgs::ImagePtr mask_msg = createMaskMsg(srv.response.masks[0]);
           sensor_msgs::ImagePtr masked_image_msg = createMaskedImageMsg(last_img_msg_, mask_msg, 2u);
           mask_pub_.publish(mask_msg);
